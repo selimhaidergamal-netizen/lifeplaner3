@@ -1,0 +1,753 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>AURA // Creative Web Engineering & 3D Experiences</title>
+  
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+
+  <style>
+    /* -------------------------------------------------------------------------- */
+    /* 1. RESET & VARIABLES                                                       */
+    /* -------------------------------------------------------------------------- */
+    :root {
+      --bg-color: #06070a;
+      --card-bg: rgba(18, 20, 29, 0.55);
+      --card-border: rgba(255, 255, 255, 0.08);
+      --card-border-hover: rgba(99, 102, 241, 0.4);
+      --text-main: #f8fafc;
+      --text-muted: #94a3b8;
+      --accent: #6366f1;
+      --accent-glow: rgba(99, 102, 241, 0.35);
+      --font-heading: 'Space Grotesk', sans-serif;
+      --font-body: 'Plus Jakarta Sans', sans-serif;
+      --transition-smooth: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      width: 100%;
+      height: 100%;
+      background-color: var(--bg-color);
+      color: var(--text-main);
+      font-family: var(--font-body);
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. BACKGROUND CANVAS                                                       */
+    /* -------------------------------------------------------------------------- */
+    #webgl-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      pointer-events: none;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 3. LAYOUT & CONTAINERS                                                     */
+    /* -------------------------------------------------------------------------- */
+    .app-container {
+      position: relative;
+      z-index: 1;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding-bottom: 140px; /* Clearance for bottom dock */
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+      width: 100%;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 4. NAVIGATION                                                              */
+    /* -------------------------------------------------------------------------- */
+    header {
+      padding: 2.5rem 0;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .logo-dot {
+      width: 8px;
+      height: 8px;
+      background-color: var(--accent);
+      border-radius: 50%;
+      box-shadow: 0 0 12px var(--accent);
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 0.9rem;
+      border-radius: 9999px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--card-border);
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      backdrop-filter: blur(10px);
+    }
+
+    .status-pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: #10b981;
+      box-shadow: 0 0 8px #10b981;
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(1.2); }
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 5. HERO SECTION                                                            */
+    /* -------------------------------------------------------------------------- */
+    .hero {
+      padding: 6rem 0 5rem;
+      max-width: 900px;
+    }
+
+    .hero-tag {
+      font-family: var(--font-heading);
+      text-transform: uppercase;
+      font-size: 0.85rem;
+      letter-spacing: 0.15em;
+      color: var(--accent);
+      margin-bottom: 1.25rem;
+      font-weight: 600;
+    }
+
+    .hero-title {
+      font-family: var(--font-heading);
+      font-size: clamp(2.75rem, 6vw, 5rem);
+      line-height: 1.05;
+      font-weight: 700;
+      letter-spacing: -0.03em;
+      margin-bottom: 1.75rem;
+      background: linear-gradient(135deg, #ffffff 30%, #94a3b8 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .hero-description {
+      font-size: 1.15rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      max-width: 650px;
+      margin-bottom: 2.5rem;
+    }
+
+    .hero-cta {
+      display: flex;
+      gap: 1.25rem;
+      flex-wrap: wrap;
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 6. MODERN 3D BORDERED BUTTONS                                              */
+    /* -------------------------------------------------------------------------- */
+    .btn-3d {
+      position: relative;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.9rem 2rem;
+      font-family: var(--font-heading);
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-main);
+      text-decoration: none;
+      background: rgba(18, 20, 29, 0.7);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      border-radius: 12px;
+      cursor: pointer;
+      outline: none;
+      backdrop-filter: blur(12px);
+      transition: var(--transition-smooth);
+      transform-style: preserve-3d;
+      box-shadow: 
+        0 4px 0 0 rgba(0, 0, 0, 0.4),
+        0 10px 20px -5px rgba(0, 0, 0, 0.5),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.1);
+    }
+
+    .btn-3d:hover {
+      transform: translateY(-3px) scale(1.02);
+      border-color: var(--card-border-hover);
+      box-shadow: 
+        0 7px 0 0 rgba(0, 0, 0, 0.5),
+        0 15px 25px -5px var(--accent-glow),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.2);
+      color: #fff;
+    }
+
+    .btn-3d:active {
+      transform: translateY(2px) scale(0.99);
+      box-shadow: 
+        0 2px 0 0 rgba(0, 0, 0, 0.6),
+        0 5px 10px -3px rgba(0, 0, 0, 0.5);
+    }
+
+    .btn-3d-primary {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(79, 70, 229, 0.4));
+      border: 1px solid rgba(99, 102, 241, 0.5);
+    }
+
+    .btn-3d-primary:hover {
+      background: linear-gradient(135deg, rgba(99, 102, 241, 0.35), rgba(79, 70, 229, 0.6));
+      border-color: rgba(129, 140, 248, 0.8);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 7. SERVICES SECTION                                                        */
+    /* -------------------------------------------------------------------------- */
+    .services {
+      padding: 4rem 0;
+    }
+
+    .section-header {
+      margin-bottom: 3rem;
+    }
+
+    .section-title {
+      font-family: var(--font-heading);
+      font-size: 2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      margin-bottom: 0.5rem;
+    }
+
+    .section-subtitle {
+      color: var(--text-muted);
+      font-size: 1rem;
+    }
+
+    .services-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .service-card {
+      position: relative;
+      background: var(--card-bg);
+      border: 1px solid var(--card-border);
+      border-radius: 16px;
+      padding: 2.25rem;
+      backdrop-filter: blur(16px);
+      transition: var(--transition-smooth);
+      overflow: hidden;
+    }
+
+    .service-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(800px circle at var(--mouse-x, 50%) var(--mouse-y, 50%), rgba(255, 255, 255, 0.04), transparent 40%);
+      pointer-events: none;
+    }
+
+    .service-card:hover {
+      transform: translateY(-5px);
+      border-color: var(--card-border-hover);
+      box-shadow: 0 20px 40px -15px rgba(0, 0, 0, 0.5), 0 0 30px 0 var(--accent-glow);
+    }
+
+    .service-num {
+      font-family: var(--font-heading);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    .service-title {
+      font-family: var(--font-heading);
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 0.75rem;
+    }
+
+    .service-desc {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 8. MACOS DOCK COMPONENT                                                    */
+    /* -------------------------------------------------------------------------- */
+    .dock-wrapper {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 100;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .dock-branding {
+      font-family: var(--font-heading);
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.12em;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      background: rgba(10, 11, 16, 0.75);
+      border: 1px solid var(--card-border);
+      padding: 0.3rem 0.8rem;
+      border-radius: 999px;
+      backdrop-filter: blur(12px);
+      pointer-events: none;
+    }
+
+    .dock {
+      display: flex;
+      align-items: flex-end;
+      gap: 12px;
+      padding: 10px 14px;
+      background: rgba(18, 20, 29, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 24px;
+      backdrop-filter: blur(20px);
+      box-shadow: 
+        0 20px 50px rgba(0, 0, 0, 0.6),
+        inset 0 1px 0 0 rgba(255, 255, 255, 0.15);
+    }
+
+    .dock-item {
+      position: relative;
+      width: 44px;
+      height: 44px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-main);
+      text-decoration: none;
+      transition: transform 0.15s ease-out, background 0.2s ease, border-color 0.2s ease;
+      transform-origin: bottom center;
+      cursor: pointer;
+    }
+
+    .dock-item:hover {
+      background: rgba(255, 255, 255, 0.12);
+      border-color: rgba(255, 255, 255, 0.25);
+    }
+
+    .dock-item svg {
+      width: 22px;
+      height: 22px;
+      fill: currentColor;
+      transition: transform 0.2s ease;
+    }
+
+    /* Tooltip */
+    .dock-item::after {
+      content: attr(data-tooltip);
+      position: absolute;
+      top: -38px;
+      left: 50%;
+      transform: translateX(-50%) scale(0.8);
+      opacity: 0;
+      background: rgba(10, 11, 16, 0.9);
+      border: 1px solid var(--card-border);
+      color: var(--text-main);
+      font-size: 0.75rem;
+      font-weight: 500;
+      padding: 4px 8px;
+      border-radius: 6px;
+      white-space: nowrap;
+      pointer-events: none;
+      transition: all 0.2s ease;
+    }
+
+    .dock-item:hover::after {
+      opacity: 1;
+      transform: translateX(-50%) scale(1);
+    }
+
+    /* -------------------------------------------------------------------------- */
+    /* 9. RESPONSIVE DESIGN                                                       */
+    /* -------------------------------------------------------------------------- */
+    @media (max-width: 768px) {
+      .hero { padding: 3rem 0; }
+      .hero-title { font-size: 2.5rem; }
+      .dock { gap: 8px; padding: 8px 10px; }
+      .dock-item { width: 38px; height: 38px; }
+      .dock-item svg { width: 18px; height: 18px; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D WebGL Background Canvas -->
+  <canvas id="webgl-canvas"></canvas>
+
+  <div class="app-container">
+    <div class="container">
+      
+      <!-- Top Header Navigation -->
+      <header>
+        <div class="logo">
+          <span class="logo-dot"></span>
+          AURA // DEV
+        </div>
+        <div class="status-badge">
+          <span class="status-pulse"></span>
+          Available for Q3/Q4 Projects
+        </div>
+      </header>
+
+      <!-- Hero Section -->
+      <section class="hero">
+        <div class="hero-tag">Creative Web Developer & Engineer</div>
+        <h1 class="hero-title">Crafting interactive 3D digital experiences that inspire.</h1>
+        <p class="hero-description">
+          Specializing in high-performance frontend architecture, interactive WebGL experiences, and minimal digital solutions engineered to scale.
+        </p>
+        <div class="hero-cta">
+          <a href="#services" class="btn-3d btn-3d-primary">Explore Services</a>
+          <a href="mailto:hello@auradev.io" class="btn-3d">Get in Touch</a>
+        </div>
+      </section>
+
+      <!-- Services Section -->
+      <section class="services" id="services">
+        <div class="section-header">
+          <h2 class="section-title">Service Offerings</h2>
+          <p class="section-subtitle">Tailored digital engineering solutions built with cutting-edge stack.</p>
+        </div>
+
+        <div class="services-grid">
+          <!-- Service 1 -->
+          <div class="service-card">
+            <span class="service-num">01 / ARCHITECTURE</span>
+            <h3 class="service-title">Frontend Engineering</h3>
+            <p class="service-desc">Single Page Applications built with React, Next.js, and TypeScript, optimized for high speed, SEO, and flawless accessibility.</p>
+          </div>
+
+          <!-- Service 2 -->
+          <div class="service-card">
+            <span class="service-num">02 / VISUALS</span>
+            <h3 class="service-title">3D & WebGL Experiences</h3>
+            <p class="service-desc">Immersive interactive canvas scenes using Three.js and custom GLSL shaders that bring static designs into living 3D space.</p>
+          </div>
+
+          <!-- Service 3 -->
+          <div class="service-card">
+            <span class="service-num">03 / INTERACTION</span>
+            <h3 class="service-title">Micro-Interactions & UI</h3>
+            <p class="service-desc">Fluid animations and physics-based interactions designed using GSAP and Framer Motion to increase user engagement.</p>
+          </div>
+
+          <!-- Service 4 -->
+          <div class="service-card">
+            <span class="service-num">04 / OPTIMIZATION</span>
+            <h3 class="service-title">Performance Tuning</h3>
+            <p class="service-desc">Auditing, bundle reduction, frame-rate stabilization, and rendering pipeline optimization to guarantee crisp 60fps visuals.</p>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </div>
+
+  <!-- macOS Style Interactive Dock -->
+  <div class="dock-wrapper">
+    <div class="dock-branding">Let's Connect</div>
+    <div class="dock" id="dock">
+      
+      <!-- GitHub -->
+      <a href="https://github.com" target="_blank" class="dock-item" data-tooltip="GitHub">
+        <svg viewBox="0 0 24 24"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>
+      </a>
+
+      <!-- Gmail -->
+      <a href="mailto:contact@auradev.io" class="dock-item" data-tooltip="Gmail">
+        <svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-1.99.9-1.99 2L2 18c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>
+      </a>
+
+      <!-- Phone -->
+      <a href="tel:+1234567890" class="dock-item" data-tooltip="Phone">
+        <svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
+      </a>
+
+      <!-- Instagram -->
+      <a href="https://instagram.com" target="_blank" class="dock-item" data-tooltip="Instagram">
+        <svg viewBox="0 0 24 24"><path d="M12 2.163c3.204 0 3.584.012 4.85.07 3.252.148 4.771 1.691 4.919 4.919.058 1.265.069 1.645.069 4.849 0 3.205-.012 3.584-.069 4.849-.149 3.225-1.664 4.771-4.919 4.919-1.266.058-1.644.07-4.85.07-3.204 0-3.584-.012-4.849-.07-3.26-.149-4.771-1.699-4.919-4.92-.058-1.265-.07-1.644-.07-4.849 0-3.204.013-3.583.07-4.849.149-3.227 1.664-4.771 4.919-4.919 1.266-.057 1.645-.069 4.849-.069zm0-2.163c-3.259 0-3.667.014-4.947.072-4.358.2-6.78 2.618-6.98 6.98-.059 1.281-.073 1.689-.073 4.948 0 3.259.014 3.668.072 4.948.2 4.358 2.618 6.78 6.98 6.98 1.281.058 1.689.072 4.948.072 3.259 0 3.668-.014 4.948-.072 4.354-.2 6.782-2.618 6.979-6.98.059-1.28.073-1.689.073-4.948 0-3.259-.014-3.667-.072-4.947-.196-4.354-2.617-6.78-6.979-6.98-1.281-.059-1.69-.073-4.949-.073zm0 5.838c-3.403 0-6.162 2.759-6.162 6.162s2.759 6.163 6.162 6.163 6.162-2.759 6.162-6.163c0-3.403-2.759-6.162-6.162-6.162zm0 10.162c-2.209 0-4-1.79-4-4 0-2.209 1.791-4 4-4s4 1.791 4 4c0 2.21-1.791 4-4 4zm6.406-11.845c-.796 0-1.441.645-1.441 1.44s.645 1.44 1.441 1.44c.795 0 1.439-.645 1.439-1.44s-.644-1.44-1.439-1.44z"/></svg>
+      </a>
+
+      <!-- WhatsApp -->
+      <a href="https://wa.me/1234567890" target="_blank" class="dock-item" data-tooltip="WhatsApp">
+        <svg viewBox="0 0 24 24"><path d="M.057 24l1.687-6.163c-1.041-1.804-1.588-3.849-1.587-5.946.003-6.556 5.338-11.891 11.893-11.891 3.181.001 6.167 1.24 8.413 3.488 2.245 2.248 3.481 5.236 3.48 8.414-.003 6.557-5.338 11.892-11.893 11.892-1.99-.001-3.951-.5-5.688-1.448l-6.305 1.654zm6.597-3.807c1.676.995 3.276 1.591 5.392 1.592 5.448 0 9.886-4.434 9.889-9.885.002-5.462-4.415-9.89-9.881-9.892-5.452 0-9.887 4.434-9.889 9.884-.001 2.225.651 3.891 1.746 5.634l-.999 3.648 3.742-.981zm11.387-5.464c-.074-.124-.272-.198-.57-.347-.297-.149-1.758-.868-2.031-.967-.272-.099-.47-.149-.669.149-.198.297-.768.967-.941 1.165-.173.198-.347.223-.644.074-.297-.149-1.255-.462-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.297-.347.446-.521.151-.172.2-.296.3-.495.099-.198.05-.372-.025-.521-.075-.148-.669-1.611-.916-2.206-.242-.579-.487-.501-.669-.51l-.57-.01c-.198 0-.52.074-.792.372s-1.04 1.016-1.04 2.479 1.065 2.876 1.213 3.074c.149.198 2.095 3.2 5.076 4.487.709.306 1.263.489 1.694.626.712.226 1.36.194 1.872.118.571-.085 1.758-.719 2.006-1.413.248-.695.248-1.29.173-1.414z"/></svg>
+      </a>
+
+    </div>
+  </div>
+
+  <!-- Three.js CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+
+  <script>
+    /* -------------------------------------------------------------------------- */
+    /* 1. THREE.JS 3D REACTIVE BACKGROUND                                        */
+    /* -------------------------------------------------------------------------- */
+    
+    // Setup Scene, Camera, Renderer
+    const canvas = document.getElementById('webgl-canvas');
+    const scene = new THREE.Scene();
+    scene.fog = new THREE.FogExp2(0x06070a, 0.025);
+
+    const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
+    camera.position.set(0, 15, 30);
+    camera.lookAt(0, 0, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+
+    // Mouse Tracking Logic
+    const mouse = {
+      x: 0,
+      y: 0,
+      targetX: 0,
+      targetY: 0,
+      radius: 8 // Interaction radius in 3D units
+    };
+
+    window.addEventListener('mousemove', (e) => {
+      // Normalized mouse coordinates [-1, 1]
+      mouse.targetX = (e.clientX / window.innerWidth) * 2 - 1;
+      mouse.targetY = -(e.clientY / window.innerHeight) * 2 + 1;
+
+      // Update Service Card spotlight effects
+      document.querySelectorAll('.service-card').forEach(card => {
+        const rect = card.getBoundingClientRect();
+        const x = e.clientX - rect.left;
+        const y = e.clientY - rect.top;
+        card.style.setProperty('--mouse-x', `${x}px`);
+        card.style.setProperty('--mouse-y', `${y}px`);
+      });
+    });
+
+    // Create Particle Mesh Wave
+    const gridWidth = 60;
+    const gridHeight = 60;
+    const separation = 1.2;
+    const count = gridWidth * gridHeight;
+
+    const geometry = new THREE.BufferGeometry();
+    const positions = new Float32Array(count * 3);
+    const initialY = new Float32Array(count);
+    const colors = new Float32Array(count * 3);
+
+    const colorAccent = new THREE.Color(0x6366f1);
+    const colorBase = new THREE.Color(0x1e293b);
+
+    let i = 0;
+    for (let x = 0; x < gridWidth; x++) {
+      for (let z = 0; z < gridHeight; z++) {
+        const posX = (x - gridWidth / 2) * separation;
+        const posZ = (z - gridHeight / 2) * separation;
+        const posY = 0;
+
+        positions[i * 3] = posX;
+        positions[i * 3 + 1] = posY;
+        positions[i * 3 + 2] = posZ;
+
+        initialY[i] = posY;
+
+        // Gradient color setup
+        colors[i * 3] = colorBase.r;
+        colors[i * 3 + 1] = colorBase.g;
+        colors[i * 3 + 2] = colorBase.b;
+
+        i++;
+      }
+    }
+
+    geometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
+    geometry.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+
+    // Particle Material
+    const material = new THREE.PointsMaterial({
+      size: 0.2,
+      vertexColors: true,
+      transparent: true,
+      opacity: 0.8
+    });
+
+    const particleSystem = new THREE.Points(geometry, material);
+    scene.add(particleSystem);
+
+    // Floating 3D Background Geometry (Minimalist Geometric Accent)
+    const icoGeo = new THREE.IcosahedronGeometry(4, 1);
+    const icoMat = new THREE.MeshBasicMaterial({
+      color: 0x6366f1,
+      wireframe: true,
+      transparent: true,
+      opacity: 0.12
+    });
+    const icoMesh = new THREE.Mesh(icoGeo, icoMat);
+    icoMesh.position.set(-15, 5, -10);
+    scene.add(icoMesh);
+
+    // Animation Loop
+    let clock = new THREE.Clock();
+
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const elapsedTime = clock.getElapsedTime();
+
+      // Smooth Lerp Mouse Movement for Parallax
+      mouse.x += (mouse.targetX - mouse.x) * 0.05;
+      mouse.y += (mouse.targetY - mouse.y) * 0.05;
+
+      // Camera parallax response
+      camera.position.x = mouse.x * 5;
+      camera.position.y = 15 + (mouse.y * 3);
+      camera.lookAt(0, 0, 0);
+
+      // Rotate geometric wireframe
+      icoMesh.rotation.x = elapsedTime * 0.1;
+      icoMesh.rotation.y = elapsedTime * 0.15;
+
+      // Update Wave and Mouse Proximity Deformations
+      const positionAttr = geometry.attributes.position;
+      const colorAttr = geometry.attributes.color;
+
+      // Convert mouse 2D coords approx to 3D plane coords
+      const mouse3DX = mouse.x * 25;
+      const mouse3DZ = -mouse.y * 25;
+
+      let idx = 0;
+      for (let x = 0; x < gridWidth; x++) {
+        for (let z = 0; z < gridHeight; z++) {
+          const px = positionAttr.getX(idx);
+          const pz = positionAttr.getZ(idx);
+
+          // Sine wave calculation
+          const waveY = Math.sin(x * 0.2 + elapsedTime * 1.5) * 0.6 +
+                        Math.cos(z * 0.2 + elapsedTime * 1.5) * 0.6;
+
+          // Distance from mouse tracer
+          const dx = px - mouse3DX;
+          const dz = pz - mouse3DZ;
+          const dist = Math.sqrt(dx * dx + dz * dz);
+
+          let mouseInfluence = 0;
+          if (dist < mouse.radius) {
+            // Push particles upwards near cursor
+            mouseInfluence = (1 - dist / mouse.radius) * 4;
+          }
+
+          positionAttr.setY(idx, initialY[idx] + waveY + mouseInfluence);
+
+          // Dynamic particle color shift near cursor
+          if (mouseInfluence > 0.5) {
+            colorAttr.setXYZ(idx, colorAccent.r, colorAccent.g, colorAccent.b);
+          } else {
+            colorAttr.setXYZ(idx, colorBase.r, colorBase.g, colorBase.b);
+          }
+
+          idx++;
+        }
+      }
+
+      positionAttr.needsUpdate = true;
+      colorAttr.needsUpdate = true;
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // Window Resize Handling
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+
+    /* -------------------------------------------------------------------------- */
+    /* 2. MACOS STYLE DOCK MAGNIFICATION EFFECT                                   */
+    /* -------------------------------------------------------------------------- */
+    const dock = document.getElementById('dock');
+    const dockItems = dock.querySelectorAll('.dock-item');
+
+    dock.addEventListener('mousemove', (e) => {
+      const mouseX = e.clientX;
+
+      dockItems.forEach(item => {
+        const rect = item.getBoundingClientRect();
+        const itemCenterX = rect.left + rect.width / 2;
+
+        // Calculate distance from cursor to item center
+        const distance = Math.abs(mouseX - itemCenterX);
+        const maxDistance = 140; // Proximity threshold in px
+
+        if (distance < maxDistance) {
+          // Cosine interpolation for fluid magnification curve
+          const scale = 1 + 0.45 * Math.cos((distance / maxDistance) * (Math.PI / 2));
+          const translateY = -(scale - 1) * 20;
+
+          item.style.transform = `scale(${scale}) translateY(${translateY}px)`;
+        } else {
+          item.style.transform = 'scale(1) translateY(0px)';
+        }
+      });
+    });
+
+    dock.addEventListener('mouseleave', () => {
+      dockItems.forEach(item => {
+        item.style.transform = 'scale(1) translateY(0px)';
+      });
+    });
+  </script>
+</body>
+</html>
